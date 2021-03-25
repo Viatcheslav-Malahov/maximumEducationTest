@@ -1,17 +1,25 @@
 <template>
   <section>
-    
-    <form action="" id="mainForm"></form>
+    <form action="https://60254fac36244d001797bfe8.mockapi.io/api/v1/send-form" 
+    method="POST"
+    id="mainForm"></form>
     <p class="branch">Ваш филиал<span>*</span></p>
-    
+
     <!-- список городов -->
-    <div  
-    class="cityList">
-      <select ref="citySelect" v-model="selected"
-      class="select_grey"
-      @change="colorChange()">
+    <div class="cityList">
+      <select
+        form="mainForm"
+        ref="citySelect"
+        v-model="selected"
+        class="select_grey"
+        @change="colorChange(), inputChange()"
+      >
         <option class="choose_opt" selected disabled>Выберите город</option>
-        <option class="city_opt" v-for="option in options" v-bind:key="option.value">
+        <option
+          class="city_opt"
+          v-for="option in options"
+          v-bind:key="option.value"
+        >
           {{ option.text }}
         </option>
       </select>
@@ -20,10 +28,12 @@
     <!-- чекбокс -->
     <div class="cityCheck">
       <input
+        form="mainForm"
         type="checkbox"
         id="checkbox"
         v-model="checked"
-        @change="cityBlock()"
+        @input="cityBlock(), inputChange()"
+        @click="inputChange()"
       />
       <label for="checkbox">Онлайн</label>
     </div>
@@ -32,40 +42,81 @@
     <div class="radio__wrapper">
       <p class="branch">Тема обращения<span>*</span></p>
       <div>
-        <input type="radio" id="one" value="Один" v-model="picked" />
+        <input
+          form="mainForm"
+          type="radio"
+          id="one"
+          value="1"
+          v-model="picked"
+        />
         <label for="one">Недовлен качеством услуг</label>
         <br />
-        <input type="radio" id="two" value="Два" v-model="picked" />
+        <input
+          form="mainForm"
+          type="radio"
+          id="two"
+          value="2"
+          v-model="picked"
+        />
         <label for="two">Расторжение договора</label>
         <br />
-        <input type="radio" id="three" value="Три" v-model="picked" />
+        <input
+          form="mainForm"
+          type="radio"
+          id="three"
+          value="3"
+          v-model="picked"
+        />
         <label for="three">Не приходит письмо активации на почту</label>
         <br />
-        <input type="radio" id="for" value="Четыре" v-model="picked" />
+        <input
+          form="mainForm"
+          type="radio"
+          id="for"
+          value="4"
+          v-model="picked"
+        />
         <label for="for">Не работает личный кабинет</label>
-        <br /> 
+        <br />
         <div class="other__wrapper">
-          <input type="text" name="" id="other" placeholder="Другое">
-        </div>  
+          <input
+            @input="inputChange() ,radioChange()"
+            ref="radioMSG"
+            type="text"
+            name=""
+            id="other"
+            placeholder="Другое"
+          />
+        </div>
       </div>
     </div>
 
     <!-- Текст обращения -->
     <p class="branch">Описание проблемы<span>*</span></p>
-    <textarea v-model="message" placeholder="хочу расторгнуть договор"></textarea>
+    <textarea
+      form="mainForm"
+      @input="inputChange()"
+      ref="msgTEXT"
+      v-model="message"
+      placeholder="хочу расторгнуть договор"
+    ></textarea>
 
     <!-- Файлы-->
     <div class="files__wrapper">
       <p class="branch">Загрузка документов</p>
       <p class="notice">
-        Приложите пожалуйста, полноэкранный скриншот. <br>
+        Приложите пожалуйста, полноэкранный скриншот. <br />
         Это поможет быстрее решить проблему.
       </p>
-      <input type="file" name="" id="">
+      <input
+      form="mainForm"
+      enctype = 'multipart/form-data'
+      type="file" name="" id="" />
     </div>
 
-    <button>Отправить</button>
-
+    <button 
+    @click="submitForm()"
+    disabled ref="sendBtn">Отправить</button>
   </section>
 </template>
 
@@ -99,14 +150,14 @@ export default {
       selected: "Выберите город",
       options: [],
       checked: false,
-      picked : '',
-      message : '',
+      picked: "",
+      message: "",
     };
   },
 
   methods: {
     cityBlock() {
-      if (this.checked === true) {
+      if (this.checked === false) {
         this.$refs.citySelect.setAttribute("disabled", undefined);
       } else {
         this.$refs.citySelect.removeAttribute("disabled", undefined);
@@ -114,10 +165,61 @@ export default {
     },
 
     colorChange() {
-      if(this.selected != 'Выберите город'){
-        this.$refs.citySelect.classList.remove('select_grey')
+      if (this.selected != "Выберите город") {
+        this.$refs.citySelect.classList.remove("select_grey");
       }
-    }
+    },
+
+    radioChange() {
+      let radioInputs = document
+        .querySelector(".radio__wrapper")
+        .querySelectorAll("input");
+      if (this.$refs.radioMSG.value != "") {
+        radioInputs.forEach((element) => {
+          element.checked = false;
+        });
+      }
+      radioInputs.forEach((element) => {
+        element.addEventListener("click", () => {
+          this.$refs.radioMSG.value = "";
+          this.inputChange();
+        });
+      });
+    },
+
+    inputChange() {
+      if (
+        this.message === "" ||
+        (this.selected === "Выберите город" && this.checked === true) ||
+        ((this.picked != '1' && 
+        this.picked != '2') &&
+        (this.picked != '3' &&
+        this.picked != '4')
+        && this.$refs.radioMSG.value === "")
+      ) {
+        this.$refs.sendBtn.setAttribute("disabled", undefined);
+      } else {
+        this.$refs.sendBtn.removeAttribute("disabled");
+      }
+    },
+
+    submitForm(){
+      let oReq = new XMLHttpRequest();
+
+      oReq.onload = ()=> {
+        let responseStatus = (JSON.parse(oReq.response))
+        if( responseStatus.success === false){
+          alert('Ошибка отправки заявки.')
+        }
+        else {
+          this.$router.replace('/SendSucces')
+        }
+        console.log(responseStatus);
+      }
+
+      oReq.open("post", "https://60254fac36244d001797bfe8.mockapi.io/api/v1/send-form", true);
+      oReq.send(); 
+    },
   },
 };
 </script>
@@ -134,7 +236,7 @@ export default {
 input {
   outline: none;
 }
-input[type='text']{
+input[type="text"] {
   height: 30px;
   margin-top: 10px;
   padding-left: 5px;
@@ -153,98 +255,102 @@ button {
   outline: none;
   border: none;
   margin-top: 30px;
-  background-color: orange;
+  background-color: #ff9765;
   color: white;
+}
+button:hover {
+  opacity: 0.8;
+}
+
+button:disabled {
+  background-color: #e2e2e2;
 }
 
 // Чекбоксинпут замены стандартного стиля
-input[type='text']:hover{
-    border: 1px solid #000000;
+input[type="text"]:hover {
+  border: 1px solid #000000;
 }
-input[type='text']:focus{
-    border: 1px solid #000000;
+input[type="text"]:focus {
+  border: 1px solid #000000;
 }
-input[type='checkbox']{
+input[type="checkbox"] {
   position: relative;
 }
-input[type='checkbox']::before {
-    content: '';
-    top: 0;
-    left: -1px;
-    top: -1px;
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: white;
-    border: 1px solid #C4C4C4;
+input[type="checkbox"]::before {
+  content: "";
+  top: 0;
+  left: -1px;
+  top: -1px;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border: 1px solid #c4c4c4;
 }
-input[type='checkbox']:hover::before {
-    border: 1px solid #000000;
+input[type="checkbox"]:hover::before {
+  border: 1px solid #000000;
 }
-input[type='checkbox']:checked::after {
-    content: '';
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    width: 18px;
-    height: 18px;
-    background: url('../assets/regForm_li.svg') no-repeat ;
-    background-position: 50% 50%;
-    background-size: 70%;
-    background-color: white;
-    visibility: visible;
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 18px;
+  height: 18px;
+  background: url("../assets/regForm_li.svg") no-repeat;
+  background-position: 50% 50%;
+  background-size: 70%;
+  background-color: white;
+  visibility: visible;
 }
-input[type='checkbox']:checked::before {
-    border: 1px solid #000000;
-    position: absolute;
+input[type="checkbox"]:checked::before {
+  border: 1px solid #000000;
+  position: absolute;
 }
 // /чекбос^
 
-
 // Инпут радиокнопка заменя стандартного стиля
-input[type='radio']{
+input[type="radio"] {
   position: relative;
 }
-input[type='radio']::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    border: 1px solid #C4C4C4;
-} 
-input[type='radio']:checked::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: black;
-    transform: translate(-50%, -50%);
-    visibility: visible;
+input[type="radio"]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 1px solid #c4c4c4;
 }
-input[type='radio']:checked::before {
-    border: 1px solid #000000;
-
+input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: black;
+  transform: translate(-50%, -50%);
+  visibility: visible;
 }
-input[type='radio']:hover::before {
-    border: 1px solid #000000;   
+input[type="radio"]:checked::before {
+  border: 1px solid #000000;
+}
+input[type="radio"]:hover::before {
+  border: 1px solid #000000;
 }
 // /радиокнопка^
-
 
 section {
   padding: 30px;
 }
 
 .radio__wrapper {
-  margin:  30px 0;
+  margin: 30px 0;
   label {
     margin-left: 10px;
   }
@@ -268,10 +374,10 @@ section {
   margin-top: 20px;
 }
 
-select{
+select {
   height: 30px;
   outline: none;
-  background-color: rgb(240, 240, 240);  
+  background-color: rgb(240, 240, 240);
   .choose_opt {
     color: grey;
   }
@@ -280,25 +386,23 @@ select{
   }
 }
 
-.select_grey{
+.select_grey {
   color: grey;
 }
-.cityCheck{
+.cityCheck {
   margin-top: 15px;
   label {
     margin-left: 10px;
   }
 }
 
-.files__wrapper{
+.files__wrapper {
   margin-top: 30px;
-  .notice{
+  .notice {
     font-size: 12px;
   }
   input {
     margin-top: 20px;
   }
 }
-
-
 </style>
