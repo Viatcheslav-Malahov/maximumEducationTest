@@ -32,17 +32,20 @@
         type="checkbox"
         id="checkbox"
         v-model="checked"
-        @input="cityBlock(), inputChange()"
-        @click="inputChange()"
-      />
+        @input="cityBlock()"
+        @change="inputChange()"
+        />
       <label for="checkbox">Онлайн</label>
     </div>
 
-    <!-- Радиокнопки -->
+    <!-- Тема обращения -->
     <div class="radio__wrapper">
+      <!-- Радио кнопки -->
       <p class="branch">Тема обращения<span>*</span></p>
       <div>
         <input
+          @input="inputChange()"
+          @change="otherClear(),inputChange()"
           form="mainForm"
           type="radio"
           id="one"
@@ -52,6 +55,8 @@
         <label for="one">Недовлен качеством услуг</label>
         <br />
         <input
+          @input="inputChange()"
+          @change="otherClear(),inputChange()"
           form="mainForm"
           type="radio"
           id="two"
@@ -61,6 +66,8 @@
         <label for="two">Расторжение договора</label>
         <br />
         <input
+          @input="inputChange()"
+          @change="otherClear(),inputChange()"
           form="mainForm"
           type="radio"
           id="three"
@@ -70,6 +77,8 @@
         <label for="three">Не приходит письмо активации на почту</label>
         <br />
         <input
+          @input="inputChange()"
+          @change="otherClear(),inputChange()"
           form="mainForm"
           type="radio"
           id="for"
@@ -78,16 +87,19 @@
         />
         <label for="for">Не работает личный кабинет</label>
         <br />
-        <div class="other__wrapper">
+        
+      </div>
+      <!-- Другое -->
+      <div class="other__wrapper">
           <input
-            @input="inputChange() ,radioChange()"
+            v-model="radiomassage"
+            @input="radioChange(),inputChange()"
             ref="radioMSG"
             type="text"
             name=""
             id="other"
             placeholder="Другое"
           />
-        </div>
       </div>
     </div>
 
@@ -152,6 +164,7 @@ export default {
       checked: false,
       picked: "",
       message: "",
+      radiomassage : "",
     };
   },
 
@@ -170,36 +183,29 @@ export default {
       }
     },
 
-    radioChange() {
-      let radioInputs = document
-        .querySelector(".radio__wrapper")
-        .querySelectorAll("input");
-      if (this.$refs.radioMSG.value != "") {
-        radioInputs.forEach((element) => {
-          element.checked = false;
-        });
-      }
-      radioInputs.forEach((element) => {
-        element.addEventListener("click", () => {
-          this.$refs.radioMSG.value = "";
-          this.inputChange();
-        });
-      });
-    },
+    
 
     inputChange() {
       if (
-        this.message === "" ||
-        (this.selected === "Выберите город" && this.checked === true) ||
-        ((this.picked != '1' && 
-        this.picked != '2') &&
-        (this.picked != '3' &&
-        this.picked != '4')
-        && this.$refs.radioMSG.value === "")
+        this.message !== "" &&
+        (this.selected !== "Выберите город" || this.checked === true) &&
+        ( this.picked !== '' || this.radiomassage !== '') 
       ) {
-        this.$refs.sendBtn.setAttribute("disabled", undefined);
+        this.$refs.sendBtn.removeAttribute("disabled", undefined);
       } else {
-        this.$refs.sendBtn.removeAttribute("disabled");
+        this.$refs.sendBtn.setAttribute("disabled", undefined);
+      }
+    },
+
+    radioChange() {
+      if (this.radiomassage !== "") {
+        this.picked = ''
+      }
+    },
+
+    otherClear() {
+      if( this.picked != ''){
+        this.radiomassage = ''
       }
     },
 
@@ -353,6 +359,9 @@ section {
   margin: 30px 0;
   label {
     margin-left: 10px;
+  }
+  input {
+    margin-top: 5px;
   }
 }
 
